@@ -1,0 +1,16 @@
+使用requests
+
+1.爬取读书分类，爬取分类下的所有书籍相关信息
+	1、category, book_name, infos_url, author, translate, book_concern, pub_date,score, assess_count, price
+	2、方法：先逐一获取分类名，再将分类名拼接到url中，再访问urL,再从页面中获取信息
+	3、只获取前50页数据，存在不足50页的，加判断，如果数据为空直接结束，进行下一个任务
+	4、反反爬，使用阿步云代理和random ua,
+	5、数据存储于mysql中
+	6、图片
+
+2.爬取小组信息，存储于mongodb
+
+
+经验教训：
+1.创建一个函数，保存日志信息：时间、报错、代理失效未能请求的url,
+2.数据中有缺失值，特别关注，使用其他特殊值代替，尽量不抛弃，尽可能多的保存信息，多用几个try
