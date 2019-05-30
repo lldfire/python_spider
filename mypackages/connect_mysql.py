@@ -6,7 +6,6 @@
 # @Version : $Id.1$
 
 # mysql数据库快捷连接的类，数据库相关配置在setting中配置
-
 import os
 import configparser
 import pymysql
@@ -16,7 +15,7 @@ os.chdir(r'C:\Users\86132\mysql_con')
 cf = configparser.ConfigParser()
 
 # 从配置文件中读取数据库连接参数
-cf.read('setting.conf')
+cf.read(r'setting.conf')
 host = cf.get('db', 'HOST')
 port = cf.get('db', 'PORT')
 user = cf.get('db', 'USER')
@@ -25,6 +24,10 @@ pswd = cf.get('db', 'PASSWORD')
 
 
 class ConnectMysql:
+    """
+    工作中常用的封装，包括数据的存储和预处理类
+    """
+
     def __init__(self):
         self.host = host
         self.user = user
@@ -65,14 +68,14 @@ class ConnectMysql:
         except pymysql.err.IntegrityError as er:
             print('数据重复:\n', er)
         except pymysql.err.InternalError as er:
-            print('数据表错误:\n', er)
+            raise Exception('数据表错误:\n', er)
         except pymysql.err.DataError as er:
-            print('数据错误:\n', er)
+            raise Exception('数据存在错误:\n', er)
 
     def exe_query(self, sql):
         """
         执行查询语句
-        : return tuple
+        : return 2D tuple
         """
         try:
             self.cursor.execute(sql)
@@ -83,9 +86,10 @@ class ConnectMysql:
 
     def exe_not_query(self, sql):
         """
-        执行非查询语句，
+        执行非查询语句
         """
         self.cursor.execute(sql)
+        self.conn.commit()
 
     def close_connect(self):
         """
@@ -94,3 +98,56 @@ class ConnectMysql:
         self.cursor.close()
         self.conn.close()
         print('数据库已关闭！')
+
+    def save_file(self, pathname, data, lock):
+        """
+        文件存储模块
+            pathname: 文件写入的路径和文件名
+            data: str object 待写入的数据
+        return: None
+        """
+        lock.acquire()
+        with open(pathname, 'a+', encoding='utf-8') as file:
+            file.write(data + '\n')
+        lock.release()
+        return None
+
+    def read_file(self, path, delete=False):
+        """
+        文件读取,仅读取和读取后删除两种模式
+            path: 待读取文件的路径
+            rewrite: Boolean Object, Ture-读取并删除内容，False-仅读取
+        return: list
+        """
+        with open(path, 'r', encoding='utf-8') as f:
+            url_list = f.readlines()
+        if delete:
+            os.remove(path)
+        return [i.replace('\n', '') for i in url_list]
+
+    def clear_data(self, data: dict):
+        """
+        数据处理，清除字典中的特殊符，如英文单双引号、制表、换行、转义等，
+        主要用于xpath提取后的数据处理
+            data: dict Object
+        return: dict
+        """
+        if isinstance(data, dict):
+            for k, v in data.items():
+                # 判断values的类型，如果是dict则递归调用其本身
+                if isinstance(v, list):
+                    data[k] = v[0].strip().replace(
+                        '\\', '/').replace("\r", '').replace(
+                        '\n', '').replace('\t', '').replace(
+                        '"', '”').replace("'", '‘').replace(
+                        "  ", '').replace('&nbsp', '') if v else ''
+
+                if isinstance(v, str):
+                    data[k] = v.strip().replace(
+                        '\\', '/').replace("\r", '').replace(
+                        '\n', '').replace('\t', '').replace(
+                        '"', '”').replace("'", '‘').replace(
+                        "  ", '').replace('&nbsp', '') if v else ''
+                if isinstance(v, dict):
+                    self.clear_data(v)
+            return data
