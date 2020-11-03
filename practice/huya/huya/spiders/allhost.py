@@ -17,7 +17,7 @@ class AllhostSpider(scrapy.Spider):
         """创建请求方法，访问所有子页面中的房间"""
         last_page = 150  # 共194页数据，先获取前2页
         #first_url = 'https://www.huya.com/g/lol'
-        for i in range(1, last_page+1):
+        for i in range(1, last_page + 1):
             if i == 1:
                 yield scrapy.Request(url=self.first_url, callback=self.parse)
                 # time.sleep(random.randint(3,6))
@@ -38,7 +38,7 @@ class AllhostSpider(scrapy.Spider):
     def parse(self, response):
         """解析获取房间url,分2步，第一步获取首页，第二步获取ajax页"""
         # 获取信息列表
-        # 进行判断如果是第一页则使用一下方法解析，否则解析json格式的
+        # 进行判断如果是第一页则使用以下方法解析，否则解析json格式的
         if response.url == 'https://www.huya.com/l':
             # 解析第一页内容
             room_url_lists = response.selector.xpath(
